@@ -1,0 +1,70 @@
+import pandas as pd
+import numpy as np
+import scipy.stats as stats
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+df = pd.read_csv("2014-thru-2020-cap-tables.csv")
+
+
+df_clean = df.dropna()
+
+
+seasonal_avg = df_clean.groupby('season')[['cap_hit', 'cap_percent']].mean().reset_index()
+
+
+mean_cap_hit = np.mean(seasonal_avg['cap_hit'])
+median_cap_hit = np.median(seasonal_avg['cap_hit'])
+std_cap_hit = np.std(seasonal_avg['cap_hit'])
+max_cap_hit = np.max(seasonal_avg['cap_hit'])
+min_cap_hit = np.min(seasonal_avg['cap_hit'])
+
+print("NumPy Operations:")
+print("Mean Cap Hit:", mean_cap_hit)
+print("Median Cap Hit:", median_cap_hit)
+print("Standard Deviation Cap Hit:", std_cap_hit)
+print("Max Cap Hit:", max_cap_hit)
+print("Min Cap Hit:", min_cap_hit)
+
+
+pearson_corr, p_value = stats.pearsonr(seasonal_avg['cap_hit'], seasonal_avg['cap_percent'])
+print("\nSciPy Pearson Correlation:")
+print("Correlation Coefficient:", pearson_corr)
+print("P-value:", p_value)
+
+
+X = sm.add_constant(seasonal_avg['cap_hit'])
+model = sm.OLS(seasonal_avg['cap_percent'], X).fit()
+print("\nStatsmodels OLS Regression Summary:")
+print(model.summary())
+
+
+plt.figure(figsize=(14, 6))
+
+
+plt.subplot(1, 2, 1)
+sns.lineplot(data=seasonal_avg, x='season', y='cap_hit', marker='o')
+plt.title('Average Cap Hit Over Seasons')
+plt.xlabel('Season')
+plt.ylabel('Average Cap Hit')
+
+
+plt.subplot(1, 2, 2)
+sns.lineplot(data=seasonal_avg, x='season', y='cap_percent', marker='o', color='orange')
+plt.title('Average Cap Percent Over Seasons')
+plt.xlabel('Season')
+plt.ylabel('Average Cap Percent')
+
+plt.tight_layout()
+plt.show()
+
+
+plt.figure(figsize=(8, 6))
+sns.regplot(x='cap_hit', y='cap_percent', data=seasonal_avg, ci=None, line_kws={'color': 'red'})
+plt.title('Correlation between Average Cap Hit and Cap Percent')
+plt.xlabel('Average Cap Hit')
+plt.ylabel('Average Cap Percent')
+plt.grid(True)
+plt.show()
